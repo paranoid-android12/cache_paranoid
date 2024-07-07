@@ -1,0 +1,38 @@
+<form [formGroup]="messageForm" class="w-[90vw] mobileM:w-[350px] gap-3 flex flex-row my-2">
+        <input formControlName="message" class="rounded-[10px] w-[70%] bg-white p-1 border-2 px-2 border-b-4 border-black font-Roboto font-medium">
+        <div (click)="submitMessage()" class="rounded-[10px] flex-1 bg-white p-1 text-center border-2 border-b-4 border-black font-Roboto font-medium">
+            Submit
+        </div>
+</form>
+
+<div class="rounded-[10px] my-2 bg-white p-1 text-center w-[90vw]  mobileM:w-[350px] border-2 border-b-4 border-black font-Roboto font-medium">
+    @if (isOnline) {
+        <div class="flex flex-row justify-center items-center">
+            <div class="rounded-[100px] w-[10px] h-[10px] bg-[#B0C5A4] mr-2"></div>
+            <p>Online</p>
+        </div>
+    }
+    @else {
+        <div class="flex flex-row justify-center items-center">
+            <div class="rounded-[100px] w-[10px] h-[10px] bg-[#D37676] mr-2"></div>
+            <p>Offline and gay</p>
+        </div>
+    }
+</div>
+
+<div class="rounded-[10px] my-2 bg-white p-2 px-3 w-[90vw]  mobileM:w-[350px] border-2 border-b-4 border-black font-Roboto font-medium">
+    <p class="text-center">Pending Requests</p>
+    <p *ngFor="let request of requestLists$ | async; let i = index">{{i+1}}. {{request.requestType}}-{{request.body}}</p>
+</div>
+
+<div class="rounded-[10px] bg-white p-2 px-3 w-[90vw]  mobileM:w-[350px] border-2 border-b-4 border-black font-Roboto font-medium">
+    <p class="text-center">Notes</p>
+    <div class="flex flex-row my-1 items-center" *ngFor="let note of notes; let i = index">  
+        <div (click)="deleteNote(note.message_ID)"> 
+            <svg width="17" height="17" viewBox="0 0 190 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M47.5007 150.417C47.5007 154.616 49.1688 158.643 52.1381 161.613C55.1075 164.582 59.1347 166.25 63.334 166.25H126.667C130.867 166.25 134.894 164.582 137.863 161.613C140.833 158.643 142.501 154.616 142.501 150.417V55.4167H47.5007V150.417ZM63.334 71.25H126.667V150.417H63.334V71.25ZM122.709 31.6667L114.792 23.75H75.209L67.2923 31.6667H39.584V47.5H150.417V31.6667H122.709Z" fill="#FF9D9F"/>
+            </svg>
+        </div>
+        <p class="ml-2 w-[80%]">{{i+1}}. {{ note.message }}</p>
+    </div>
+</div>
