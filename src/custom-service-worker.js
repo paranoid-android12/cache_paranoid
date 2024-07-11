@@ -27,7 +27,6 @@ self.addEventListener('sync', event => {
 });
 
 self.addEventListener("push", e => {
-    console.log('Notification event fired.');
     self.registration.showNotification("Wohoo!!", { body: e.data.text() })
 })
 
@@ -35,7 +34,6 @@ self.addEventListener("push", e => {
 
 //Fetches current request queue on indexeddb.
 function indexedFetch(){
-    console.log("Index fetch...??!?!?!?!");
     let db;
     //Starts up a request to open db
     const request = indexedDB.open('888-Hardware-DB');
@@ -111,7 +109,7 @@ function postData(message) {
             body: jsonData
         })
         .then(data => {
-            console.log('Message synced successfully', data);
+            console.log('Message posted successfully to sync');
             resolve(data);
         })
         .catch(error => {
@@ -129,7 +127,7 @@ function deleteData(id) {
             method: 'DELETE',
         })
         .then(data => {
-            console.log('Message synced successfully', data);
+            console.log('Message deleted successfully to sync');
             resolve(data);
         })
         .catch(error => {

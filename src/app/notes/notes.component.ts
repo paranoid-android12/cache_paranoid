@@ -61,15 +61,9 @@ export class NotesComponent {
       });
     }
 
-
     this.fetchMessage();
     this.createOnline$().subscribe(data => {
       this.isOnline = data
-
-      if(this.isOnline) {
-        this.prepSync = true;
-        this.backgroundSync();
-      }
     })
 
     this.requestLists$.subscribe(data => {
@@ -85,7 +79,15 @@ export class NotesComponent {
       }
     };
 
-
+    navigator.serviceWorker.addEventListener('message', event => {
+      if (event.data && event.data.type === 'SYNC_COMPLETE') {
+        if (event.data.success) {
+          console.log("Flush Finished!")
+          this.showNotification();
+          this.fetchMessage();
+        }
+      }
+    });
   }
 
   messageForm = new FormGroup({
@@ -103,47 +105,49 @@ export class NotesComponent {
   submitMessage(){
     console.log(this.messageForm.get('message')?.value);
 
-    if(this.isOnline){
-      //Send as is if online
-      this.dataService.postData(this.messageForm, "addMessage").subscribe({
-        complete: () => {
-          this.messageForm.get('message')?.reset();
-          this.fetchMessage();
-        },
-        error: (err) => {
-          console.log(err);
-          this.addNewRequest(this.messageForm.get('message')!.value+'', 'POST');
-        }
-      });
-    }
-    else{
-      this.addNewRequest(this.messageForm.get('message')!.value+'', 'POST');
-    }
+    // if(this.isOnline){
+    //Send as is if online
+    this.dataService.postData(this.messageForm, "addMessage").subscribe({
+      complete: () => {
+        this.messageForm.get('message')?.reset();
+        this.fetchMessage();
+      },
+      error: (err) => {
+        console.log(err);
+        this.addNewRequest(this.messageForm.get('message')!.value+'', 'POST');
+        this.trafficHandler();
+      }
+    });
+    // }
+    // else{
+    //   this.addNewRequest(this.messageForm.get('message')!.value+'', 'POST');
+    // }
   }
 
   //DELETE REQUEST
   deleteNote(id: number){
     console.log("Deleting...");
 
-    if(this.isOnline){
-      this.dataService.deleteData(id, 'deleteMessage?id=' + id).subscribe({
-        complete: () => {
-          this.messageForm.get('message')?.reset();
-          try {
-            this.fetchMessage();
-          } catch (error) {
-            console.log(error);
-          }
-        },
-        error: (err) => {
-          console.log(err);
-          this.addNewRequest(id+"", 'DELETE');
+    // if(this.isOnline){
+    this.dataService.deleteData(id, 'deleteMessage?id=' + id).subscribe({
+      complete: () => {
+        this.messageForm.get('message')?.reset();
+        try {
+          this.fetchMessage();
+        } catch (error) {
+          console.log(error);
         }
-      })
-    }
-    else{
-      this.addNewRequest(id+"", 'DELETE')
-    }
+      },
+      error: (err) => {
+        console.log(err);
+        this.addNewRequest(id+"", 'DELETE');
+        this.trafficHandler();
+      }
+    })
+    // }
+    // else{
+    //   this.addNewRequest(id+"", 'DELETE')
+    // }
   }
 
   //Creates a new record on IndexedDB
@@ -181,44 +185,29 @@ export class NotesComponent {
     });
   }
 
-  backgroundSync() {
-    // if ('serviceWorker' in navigator && 'SyncManager' in window) {
-    //   navigator.serviceWorker.ready.then((registration) => {
-    //     return registration.sync.register('queue-data')
-    //       .then(() => {
-    //         console.log('Sync registered');
-    //       });
-    //   }).catch((error) => {
-    //     console.log('Sync registration failed:', error);
-    //   });
-    // }
+  async trafficHandler() {
+    const registration = await navigator.serviceWorker.ready;
+    const tags = await registration.sync.getTags();
+    console.log("Tags: ", tags);
+    if(!tags.includes('queue-data')) {
+      this.backgroundSync();
+    }
+    else{
+      console.log("Background sync already registered!");
+    }
+  }
 
-    setTimeout(() =>
-      {
-        this.prepSync = false;
-        if ('serviceWorker' in navigator && 'SyncManager' in window) {
-          navigator.serviceWorker.ready.then((registration) => {
-            return new Promise((resolve, reject) => {
-    
-              registration.sync.register('queue-data');
-              navigator.serviceWorker.addEventListener('message', event => {
-                if (event.data && event.data.type === 'SYNC_COMPLETE') {
-                  if (event.data.success) {
-                    console.log("Flush Finished!")
-                    this.showNotification();
-                    this.fetchMessage();
-                    resolve("Yeet");
-                  } else {
-                    reject(event.data.error);
-                  }
-                }
-              });
-            }).catch((error) => {
-              console.log('Sync registration failed:', error);
-            });
-          });
-        }
-      }, 2000);
+  backgroundSync() {
+    this.prepSync = false;
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.sync.register('queue-data');
+      });
+    }
+    // setTimeout(() =>
+    //   {
+
+    //   }, 2000);
 
   }
 }
